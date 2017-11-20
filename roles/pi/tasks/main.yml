@@ -43,3 +43,8 @@
 
 - name: "Start PostgreSQL"
   service: name=postgresql state=started enabled=yes
+
+- name: App Python requirements
+  pip:
+    requirements: /home/pi/thermostat/requirements.txt
+    executable: pip3
