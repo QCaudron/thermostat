@@ -1,0 +1,45 @@
+---
+- set_fact:
+    real_ansible_host: "{{ ansible_host }}"
+
+- name: "Expand filesystem"
+  shell: raspi-config --expand-rootfs
+  become: yes
+
+- name: "Update installed apt packages" 
+  apt: 
+    update_cache: yes
+    upgrade: full
+
+- name: "Install OS-level packages"
+  apt: name={{ item }} state=latest
+  with_items:
+    - build-essential
+    - python3
+    - python3-pip
+    - git 
+    - vim
+    - openssl
+    - libssl-dev
+    - libssl-doc
+    - postgresql
+    - postgresql-contrib
+    - libpq-dev
+
+- name: "Clone app repo"
+  git:
+    repo: "https://github.com/qcaudron/thermostat"
+    dest: "/home/pi/thermostat"
+
+- name: "Rebooting"
+  shell: sleep 2 && reboot
+  async: 1
+  poll: 0
+  ignore_errors: true
+
+- name: "Wait for Raspberry Pi to reboot."
+  local_action: wait_for host={{ real_ansible_host }} port=22 state=started delay=10
+  become: false
+
+- name: "Start PostgreSQL"
+  service: name=postgresql state=started enabled=yes
